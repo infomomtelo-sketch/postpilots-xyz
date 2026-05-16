@@ -261,6 +261,7 @@ textarea::placeholder,input::placeholder{color:var(--tx3)}
       <div class="howto-step"><div class="step-num">2</div><div class="step-text"><strong>Copy</strong> the post with one click — tailored for that platform</div></div>
       <div class="howto-step"><div class="step-num">3</div><div class="step-text"><strong>Open</strong> the platform directly using the button next to each post</div></div>
       <div class="howto-step"><div class="step-num">4</div><div class="step-text"><strong>Paste</strong> and post — takes 10 seconds per platform</div></div>
+      <div class="howto-step"><div class="step-num">5</div><div class="step-text"><strong>Or schedule</strong> — click the 📅 Buffer button to auto-schedule at the best time</div></div>
     </div>
     <div class="timing-grid">
       <div class="timing-card"><div class="timing-platform" style="color:var(--twitter)">Twitter / X</div><div class="timing-tip">Best time: 9am or 5pm weekdays. Lunch hours also peak.</div></div>
@@ -482,6 +483,11 @@ function updateUI() {
   const badge = document.getElementById('user-badge');
   badge.style.display = loggedIn ? 'flex' : 'none';
   if (currentUser) document.getElementById('user-name').textContent = currentUser.email?.split('@')[0] || 'Account';
+}
+
+function scheduleBuffer(text) {
+  const encoded = encodeURIComponent(text);
+  window.open(`https://buffer.com/add?text=${encoded}`, '_blank');
 }
 
 async function init() {
