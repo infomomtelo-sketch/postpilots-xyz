@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PostPilot — AI Social Media Post Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --font:'Inter',system-ui,sans-serif;
+  --accent:#6366f1;
+  --accent2:#818cf8;
+  --bg:#0a0a0f;
+  --bg2:#111118;
+  --bg3:#1a1a24;
+  --border:rgba(255,255,255,0.08);
+  --border2:rgba(255,255,255,0.15);
+  --tx:#ffffff;
+  --tx2:rgba(255,255,255,0.6);
+  --tx3:rgba(255,255,255,0.3);
+  --green:#4ade80;
+  --twitter:#1d9bf0;
+  --linkedin:#0a66c2;
+  --facebook:#1877f2;
+  --instagram:#e1306c;
+  --telegram:#229ed9;
+  --discord:#5865f2;
+}
+html,body{min-height:100%;font-family:var(--font);background:var(--bg);color:var(--tx);overflow-x:hidden}
+
+/* ANIMATED BACKGROUND */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(129,140,248,0.06) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* LAYOUT */
+.app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column}
+
+/* NAV */
+nav{padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,10,15,0.8);backdrop-filter:blur(20px);position:sticky;top:0;z-index:100}
+.logo{font-size:18px;font-weight:700;letter-spacing:-.5px;color:#fff}
+.logo span{color:var(--accent)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.btn-nav{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);border:1px solid var(--border2);background:transparent;color:var(--tx2);transition:all .2s}
+.btn-nav:hover{background:rgba(255,255,255,0.06);color:#fff}
+.btn-nav.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-nav.primary:hover{background:var(--accent2)}
+#user-badge{display:none;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;color:var(--tx2)}
+.udot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+/* HERO */
+.hero{text-align:center;padding:60px 24px 40px;max-width:680px;margin:0 auto}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:100px;padding:5px 14px;font-size:12px;color:var(--accent2);margin-bottom:20px;font-weight:500}
+.hero h1{font-size:clamp(2rem,5vw,3rem);font-weight:700;letter-spacing:-1.5px;line-height:1.1;margin-bottom:14px}
+.hero h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:16px;color:var(--tx2);line-height:1.7;max-width:480px;margin:0 auto 32px}
+
+/* MAIN GENERATOR */
+.generator{max-width:900px;margin:0 auto;padding:0 24px 60px;width:100%}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-header-icon{width:32px;height:32px;border-radius:8px;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center;font-size:14px}
+.card-title{font-size:14px;font-weight:600;color:#fff}
+.card-sub{font-size:12px;color:var(--tx3);margin-top:1px}
+.card-body{padding:20px}
+
+/* INPUTS */
+.field{margin-bottom:16px}
+.field label{font-size:12px;font-weight:500;color:var(--tx3);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+textarea,input,select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;outline:none;transition:border-color .2s}
+textarea{padding:12px 14px;resize:none;line-height:1.6}
+input{padding:11px 14px}
+select{padding:11px 14px;cursor:pointer;-webkit-appearance:none}
+textarea:focus,input:focus,select:focus{border-color:var(--accent)}
+textarea::placeholder,input::placeholder{color:var(--tx3)}
+
+/* PLATFORM GRID */
+.platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:480px){.platform-grid{grid-template-columns:repeat(2,1fr)}}
+.platform-chip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;background:var(--bg3);font-size:13px;font-weight:500;color:var(--tx2);user-select:none}
+.platform-chip:hover{border-color:var(--border2);color:#fff}
+.platform-chip.selected{color:#fff}
+.platform-chip.tw.selected{border-color:var(--twitter);background:rgba(29,155,240,0.1);color:var(--twitter)}
+.platform-chip.li.selected{border-color:var(--linkedin);background:rgba(10,102,194,0.1);color:var(--linkedin)}
+.platform-chip.fb.selected{border-color:var(--facebook);background:rgba(24,119,242,0.1);color:var(--facebook)}
+.platform-chip.ig.selected{border-color:var(--instagram);background:rgba(225,48,108,0.1);color:var(--instagram)}
+.platform-chip.tg.selected{border-color:var(--telegram);background:rgba(34,158,217,0.1);color:var(--telegram)}
+.platform-chip.dc.selected{border-color:var(--discord);background:rgba(88,101,242,0.1);color:var(--discord)}
+.platform-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.tw .platform-dot{background:var(--twitter)}
+.li .platform-dot{background:var(--linkedin)}
+.fb .platform-dot{background:var(--facebook)}
+.ig .platform-dot{background:var(--instagram)}
+.tg .platform-dot{background:var(--telegram)}
+.dc .platform-dot{background:var(--discord)}
+
+/* TONE GRID */
+.tone-grid{display:flex;gap:8px;flex-wrap:wrap}
+.tone-chip{padding:7px 14px;border-radius:100px;border:1px solid var(--border);cursor:pointer;font-size:12.5px;font-weight:500;color:var(--tx2);background:var(--bg3);transition:all .2s}
+.tone-chip:hover{border-color:var(--border2);color:#fff}
+.tone-chip.selected{background:rgba(99,102,241,0.15);border-color:var(--accent);color:var(--accent2)}
+
+/* GENERATE BUTTON */
+.btn-generate{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;letter-spacing:-.2px;position:relative;overflow:hidden}
+.btn-generate:hover{opacity:.9;transform:translateY(-1px)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-generate .spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESULTS */
+#results{display:none}
+.result-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:all .2s}
+.result-card:hover{border-color:var(--border2)}
+.result-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.result-platform{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.result-actions{display:flex;gap:6px}
+.btn-copy{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--tx2);font-size:11.5px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn-copy:hover{background:rgba(255,255,255,0.06);color:#fff}
+.btn-copy.copied{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.3);color:var(--green)}
+.btn-open{padding:5px 12px;border-radius:7px;border:none;font-size:11.5px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .2s;color:#fff}
+.result-body{padding:16px;font-size:13.5px;line-height:1.75;color:rgba(255,255,255,0.85);white-space:pre-wrap;word-break:break-word}
+.char-count{padding:8px 16px;font-size:11px;color:var(--tx3);border-top:1px solid var(--border);text-align:right}
+
+/* HOW TO SECTION */
+.howto{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.howto-title{font-size:14px;font-weight:600;margin-bottom:16px;color:#fff}
+.howto-steps{display:flex;flex-direction:column;gap:10px}
+.howto-step{display:flex;gap:12px;align-items:flex-start}
+.step-num{width:22px;height:22px;border-radius:50%;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);color:var(--accent2);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--tx2);line-height:1.5}
+.step-text strong{color:#fff}
+
+/* TIMING TIPS */
+.timing-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+@media(max-width:480px){.timing-grid{grid-template-columns:1fr}}
+.timing-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px}
+.timing-platform{font-size:12px;font-weight:600;margin-bottom:4px}
+.timing-tip{font-size:11.5px;color:var(--tx2);line-height:1.4}
+
+/* AUTH MODAL */
+#auth-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px}
+#auth-modal.show{display:flex}
+.auth-card{background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:28px;width:100%;max-width:380px}
+.auth-logo{font-size:22px;font-weight:700;text-align:center;margin-bottom:4px}
+.auth-logo span{color:var(--accent)}
+.auth-sub{font-size:13px;color:var(--tx2);text-align:center;margin-bottom:20px}
+.auth-tabs{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:16px}
+.auth-tab{flex:1;padding:8px;border-radius:7px;border:none;background:transparent;color:var(--tx2);font-size:13px;cursor:pointer;font-family:var(--font);font-weight:500;transition:all .2s}
+.auth-tab.on{background:rgba(99,102,241,0.2);color:var(--accent2)}
+.auth-field{margin-bottom:12px}
+.auth-field label{font-size:11.5px;color:var(--tx3);display:block;margin-bottom:5px;font-weight:500}
+.auth-field input{width:100%;padding:11px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:14px;outline:none;font-family:var(--font)}
+.auth-field input:focus{border-color:var(--accent)}
+.auth-field input::placeholder{color:var(--tx3)}
+.auth-btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:4px;transition:all .2s}
+.auth-btn:hover{background:var(--accent2)}
+.auth-err{font-size:12px;color:#fca5a5;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:none}
+.auth-note{font-size:11px;color:var(--tx3);text-align:center;margin-top:10px}
+.auth-close{display:block;text-align:center;margin-top:12px;font-size:12px;color:var(--tx3);cursor:pointer;background:none;border:none;font-family:var(--font)}
+
+/* UPGRADE BANNER */
+#upgrade-banner{display:none;background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(129,140,248,0.1));border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:14px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.upgrade-text{font-size:13px;color:var(--tx2)}
+.upgrade-text strong{color:#fff}
+.btn-upgrade{padding:8px 18px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Post<span>Pilot</span></div>
+  <div class="nav-right">
+    <div id="user-badge"><div class="udot"></div><span id="user-name">Account</span></div>
+    <button class="btn-nav" id="btn-signin" onclick="showAuth('signin')">Sign in</button>
+    <button class="btn-nav primary" id="btn-signup" onclick="showAuth('signup')">Get started free</button>
+    <button class="btn-nav" id="btn-signout" style="display:none" onclick="signOut()">Sign out</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">✦ Powered by Claude AI</div>
+  <h1>Write once.<br/><span>Post everywhere.</span></h1>
+  <p>Describe your topic. PostPilot generates perfect posts for every platform — tailored tone, right length, native format. Copy and post in seconds.</p>
+</div>
+
+<!-- GENERATOR -->
+<div class="generator">
+
+  <!-- UPGRADE BANNER -->
+  <div id="upgrade-banner">
+    <div class="upgrade-text"><strong>Free limit reached.</strong> Upgrade for unlimited post generation.</div>
+    <button class="btn-upgrade">Upgrade — $5/month</button>
+  </div>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon">✍️</div>
+      <div>
+        <div class="card-title">What do you want to post about?</div>
+        <div class="card-sub">Describe your topic, product, or announcement</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="field">
+        <label>Your topic</label>
+        <textarea id="topic" rows="3" placeholder="e.g. I just launched a new AI website builder called OwnSite. It helps people escape Lovable and Wix by building sites they actually own..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Tone</label>
+        <div class="tone-grid">
+          <div class="tone-chip selected" onclick="selectTone(this,'professional')">Professional</div>
+          <div class="tone-chip" onclick="selectTone(this,'casual')">Casual</div>
+          <div class="tone-chip" onclick="selectTone(this,'inspirational')">Inspirational</div>
+          <div class="tone-chip" onclick="selectTone(this,'funny')">Funny</div>
+          <div class="tone-chip" onclick="selectTone(this,'urgent')">Urgent</div>
+          <div class="tone-chip" onclick="selectTone(this,'storytelling')">Storytelling</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Platforms</label>
+        <div class="platform-grid">
+          <div class="platform-chip tw selected" onclick="togglePlatform(this,'twitter')"><div class="platform-dot"></div>Twitter / X</div>
+          <div class="platform-chip li selected" onclick="togglePlatform(this,'linkedin')"><div class="platform-dot"></div>LinkedIn</div>
+          <div class="platform-chip fb" onclick="togglePlatform(this,'facebook')"><div class="platform-dot"></div>Facebook</div>
+          <div class="platform-chip ig" onclick="togglePlatform(this,'instagram')"><div class="platform-dot"></div>Instagram</div>
+          <div class="platform-chip tg" onclick="togglePlatform(this,'telegram')"><div class="platform-dot"></div>Telegram</div>
+          <div class="platform-chip dc" onclick="togglePlatform(this,'discord')"><div class="platform-dot"></div>Discord</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Extra instructions (optional)</label>
+        <input type="text" id="extra" placeholder="e.g. mention the free trial, include a call to action, tag @ownsite"/>
+      </div>
+
+      <button class="btn-generate" id="generate-btn" onclick="generate()">
+        <span id="btn-text">Generate Posts</span>
+        <div class="spinner" id="spinner"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+
+  <!-- HOW TO POST -->
+  <div class="howto">
+    <div class="howto-title">How to post after generating</div>
+    <div class="howto-steps">
+      <div class="howto-step"><div class="step-num">1</div><div class="step-text"><strong>Generate</strong> your posts above — one for each platform</div></div>
+      <div class="howto-step"><div class="step-num">2</div><div class="step-text"><strong>Copy</strong> the post with one click — tailored for that platform</div></div>
+      <div class="howto-step"><div class="step-num">3</div><div class="step-text"><strong>Open</strong> the platform directly using the button next to each post</div></div>
+      <div class="howto-step"><div class="step-num">4</div><div class="step-text"><strong>Paste</strong> and post — takes 10 seconds per platform</div></div>
+    </div>
+    <div class="timing-grid">
+      <div class="timing-card"><div class="timing-platform" style="color:var(--twitter)">Twitter / X</div><div class="timing-tip">Best time: 9am or 5pm weekdays. Lunch hours also peak.</div></div>
+      <div class="timing-card"><div class="timing-platform" style="color:var(--linkedin)">LinkedIn</div><div class="timing-tip">Tuesday–Thursday 8–10am. Avoid weekends.</div></div>
+      <div class="timing-card"><div class="timing-platform" style="color:var(--facebook)">Facebook</div><div class="timing-tip">Wednesday 11am–1pm. Evenings 7–9pm.</div></div>
+      <div class="timing-card"><div class="timing-platform" style="color:var(--instagram)">Instagram</div><div class="timing-tip">Monday–Friday 11am. Wednesday gets most reach.</div></div>
+      <div class="timing-card"><div class="timing-platform" style="color:var(--telegram)">Telegram</div><div class="timing-tip">Evenings 6–9pm when users are relaxed and browsing.</div></div>
+      <div class="timing-card"><div class="timing-platform" style="color:var(--discord)">Discord</div><div class="timing-tip">Afternoons and evenings. Weekends are peak times.</div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal">
+  <div class="auth-card">
+    <div class="auth-logo">Post<span>Pilot</span></div>
+    <div class="auth-sub" id="auth-sub">Create your free account</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-signup" onclick="switchAuth('signup')">Sign up free</button>
+      <button class="auth-tab" id="tab-signin" onclick="switchAuth('signin')">Sign in</button>
+    </div>
+    <div id="auth-err" class="auth-err"></div>
+    <div class="auth-field"><label>Email</label><input id="auth-email" type="email" placeholder="you@example.com"/></div>
+    <div class="auth-field"><label>Password</label><input id="auth-password" type="password" placeholder="At least 6 characters"/></div>
+    <button class="auth-btn" id="auth-submit" onclick="submitAuth('signup')">Create free account</button>
+    <p class="auth-note">3 free generations included. No credit card needed.</p>
+    <button class="auth-close" onclick="closeAuth()">Maybe later</button>
+  </div>
+</div>
+
+<script>
+const WORKER_URL = 'https://autopost-api.infomomtelo.workers.dev';
+const SUPA_URL = 'https://dmemzljerldzeiwqfxzp.supabase.co';
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRtZW16bGplcmxkemVpd3FmeHpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NDMxNzgsImV4cCI6MjA5NDIxOTE3OH0.u4FL1mk555dUesVNjF58pXwkQlvvQYQgR5JpcxRtB40';
+
+let currentUser = null;
+let token = null;
+let selectedTone = 'professional';
+let selectedPlatforms = ['twitter','linkedin'];
+let freeCount = parseInt(localStorage.getItem('pp_free') || '0');
+const FREE_LIMIT = 3;
+
+const PLATFORM_COLORS = {
+  twitter:'#1d9bf0', linkedin:'#0a66c2', facebook:'#1877f2',
+  instagram:'#e1306c', telegram:'#229ed9', discord:'#5865f2'
+};
+const PLATFORM_URLS = {
+  twitter:'https://twitter.com/compose/tweet',
+  linkedin:'https://www.linkedin.com/feed/',
+  facebook:'https://www.facebook.com/',
+  instagram:'https://www.instagram.com/',
+  telegram:'https://web.telegram.org/',
+  discord:'https://discord.com/channels/@me'
+};
+const PLATFORM_LABELS = {
+  twitter:'Twitter / X', linkedin:'LinkedIn', facebook:'Facebook',
+  instagram:'Instagram', telegram:'Telegram', discord:'Discord'
+};
+
+function selectTone(el, tone) {
+  document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTone = tone;
+}
+
+function togglePlatform(el, platform) {
+  el.classList.toggle('selected');
+  if (el.classList.contains('selected')) {
+    if (!selectedPlatforms.includes(platform)) selectedPlatforms.push(platform);
+  } else {
+    selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+  }
+}
+
+async function generate() {
+  const topic = document.getElementById('topic').value.trim();
+  const extra = document.getElementById('extra').value.trim();
+
+  if (!topic) { alert('Please describe what you want to post about.'); return; }
+  if (selectedPlatforms.length === 0) { alert('Please select at least one platform.'); return; }
+
+  // Check free limit
+  if (!currentUser && freeCount >= FREE_LIMIT) {
+    showAuth('signup');
+    return;
+  }
+
+  setBusy(true);
+  try {
+    const res = await fetch(`${WORKER_URL}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify({ topic, tone: selectedTone, platforms: selectedPlatforms, extra })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    if (!currentUser) {
+      freeCount++;
+      localStorage.setItem('pp_free', freeCount);
+    }
+
+    renderResults(data.posts);
+  } catch (err) {
+    alert('Something went wrong: ' + err.message);
+  }
+  setBusy(false);
+}
+
+function renderResults(posts) {
+  const container = document.getElementById('results');
+  container.style.display = 'block';
+  container.innerHTML = Object.entries(posts).map(([platform, text]) => {
+    const color = PLATFORM_COLORS[platform] || '#fff';
+    const label = PLATFORM_LABELS[platform] || platform;
+    const url = PLATFORM_URLS[platform] || '#';
+    const chars = text.length;
+    return `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="result-platform">
+            <div style="width:8px;height:8px;border-radius:50%;background:${color}"></div>
+            <span style="color:${color}">${label}</span>
+            <span style="color:var(--tx3);font-weight:400;font-size:12px">${chars} chars</span>
+          </div>
+          <div class="result-actions">
+            <button class="btn-copy" onclick="copyPost(this, \`${text.replace(/`/g,'\\`')}\`)">Copy</button>
+            <button class="btn-open" style="background:${color}" onclick="window.open('${url}','_blank')">Open ${label.split('/')[0]}</button>
+          </div>
+        </div>
+        <div class="result-body">${text}</div>
+      </div>`;
+  }).join('');
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyPost(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function setBusy(on) {
+  const btn = document.getElementById('generate-btn');
+  const txt = document.getElementById('btn-text');
+  const spin = document.getElementById('spinner');
+  btn.disabled = on;
+  txt.style.display = on ? 'none' : 'block';
+  spin.style.display = on ? 'block' : 'none';
+}
+
+// AUTH
+function showAuth(mode) {
+  switchAuth(mode);
+  document.getElementById('auth-modal').classList.add('show');
+}
+function closeAuth() { document.getElementById('auth-modal').classList.remove('show'); }
+
+function switchAuth(mode) {
+  document.getElementById('tab-signup').classList.toggle('on', mode === 'signup');
+  document.getElementById('tab-signin').classList.toggle('on', mode === 'signin');
+  document.getElementById('auth-sub').textContent = mode === 'signup' ? 'Create your free account' : 'Welcome back';
+  document.getElementById('auth-submit').textContent = mode === 'signup' ? 'Create free account' : 'Sign in';
+  document.getElementById('auth-submit').onclick = () => submitAuth(mode);
+  document.getElementById('auth-err').style.display = 'none';
+}
+
+async function submitAuth(mode) {
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const btn = document.getElementById('auth-submit');
+  const err = document.getElementById('auth-err');
+  err.style.display = 'none';
+  if (!email || !password) { err.textContent = 'Please enter email and password.'; err.style.display = 'block'; return; }
+  btn.disabled = true;
+  btn.textContent = mode === 'signup' ? 'Creating...' : 'Signing in...';
+  try {
+    const endpoint = mode === 'signup' ? '/api/auth/register' : '/api/auth/login';
+    const res = await fetch(`${WORKER_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('pp_token', token);
+    updateUI();
+    closeAuth();
+  } catch (e) {
+    err.textContent = e.message || 'Something went wrong.';
+    err.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = mode === 'signup' ? 'Create free account' : 'Sign in';
+}
+
+function signOut() {
+  token = null;
+  currentUser = null;
+  localStorage.removeItem('pp_token');
+  updateUI();
+}
+
+function updateUI() {
+  const loggedIn = !!currentUser;
+  document.getElementById('btn-signin').style.display = loggedIn ? 'none' : 'block';
+  document.getElementById('btn-signup').style.display = loggedIn ? 'none' : 'block';
+  document.getElementById('btn-signout').style.display = loggedIn ? 'block' : 'none';
+  const badge = document.getElementById('user-badge');
+  badge.style.display = loggedIn ? 'flex' : 'none';
+  if (currentUser) document.getElementById('user-name').textContent = currentUser.email?.split('@')[0] || 'Account';
+}
+
+async function init() {
+  const saved = localStorage.getItem('pp_token');
+  if (saved) {
+    try {
+      const res = await fetch(`${WORKER_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${saved}` }
+      });
+      const data = await res.json();
+      if (data.user) { token = saved; currentUser = data.user; updateUI(); }
+      else localStorage.removeItem('pp_token');
+    } catch {}
+  }
+}
+init();
+</script>
+</body>
+</html>
